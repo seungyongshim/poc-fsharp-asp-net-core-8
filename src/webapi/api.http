@@ -1,7 +1,7 @@
-POST http://localhost:5013/
+POST http://localhost:5013/api/v2/users
 Content-Type: application/json
 
 {
     "name": "John Doe",
-    "phoneNumber": "1111"
+    "phoneNumber": "821000000000"
 }
