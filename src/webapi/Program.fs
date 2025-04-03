@@ -13,7 +13,7 @@ type InternationalPhoneNumber = InternationalPhoneNumber of string
 type PhoneNumber = InternationalPhoneNumber of InternationalPhoneNumber
 
 
-[<CLIMutable>]
+
 type Dto = {
     Name: Name
     PhoneNumber : PhoneNumber

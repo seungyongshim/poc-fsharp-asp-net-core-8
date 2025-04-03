@@ -1,32 +1,39 @@
-open System
-open Microsoft.AspNetCore.Builder
-open Microsoft.Extensions.Hosting
+open FSharp.AspNetCore.Builder
+open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open System.Net.Http
-open Microsoft.AspNetCore.Http
+open System
+open System.Net.Http.Json
 
-#nowarn "0020"
 
-[<CLIMutable>]
 type Dto = {
     Name: string
+    PhoneNumber : string
 }
 
 [<EntryPoint>]
-let main args =
-    let builder = WebApplication.CreateBuilder(args)
+let main _ =
+    let app = webApp {
+        services (fun services _ ->
+            services.AddHttpClient("reqres", fun (http: HttpClient) ->
+                http.BaseAddress <- Uri("https://reqres.in")
+            ).AddAsKeyed()
+        )
+        
+        get "/" (fun () -> task {
+            return Results.Ok("Hello World")
+        })
 
-    builder.Services.AddHttpClient("reqres", fun (http: HttpClient) ->
-        http.BaseAddress <- Uri("https://reqres.in/api/")
-    ).AddAsKeyed() 
-
-    let app = builder.Build()
-
-    app.MapPost("/", Func<HttpContext,HttpClient,Dto,_>(fun context -> fun client -> fun dto -> task {
-          return "Hello World!"
-        })) 
+        post "/api/v2/users" (fun (httpContext: HttpContext) ->
+                              fun (dto: Dto) -> backgroundTask {
+            use httpClient = httpContext.RequestServices.GetRequiredKeyedService<HttpClient>("reqres")
+            let! response = httpClient.PostAsJsonAsync("/api/users", dto)
+            let! jsonResopnse = response.Content.ReadFromJsonAsync<Dto>()
+            return Results.Json(jsonResopnse, contentType= $"{response.Content.Headers.ContentType}")
+        })
+    }
 
     app.Run()
-
     0 // Exit code
+
 
